@@ -1,4 +1,4 @@
-import { PrismaClient, UserRole, AttendanceSessionStatus, VerificationMethod } from "@prisma/client";
+import { PrismaClient, AccountStatus, UserRole, AttendanceSessionStatus, VerificationMethod } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
@@ -23,7 +23,7 @@ async function main() {
 		update: {
 			fullName: "System Administrator",
 			role: UserRole.ADMIN,
-			isActive: true,
+			status: AccountStatus.ACTIVE,
 			passwordHash: adminPasswordHash,
 		},
 		create: {
@@ -36,7 +36,7 @@ async function main() {
 
 	const lecturerUser = await prisma.user.upsert({
 		where: { email: "lecturer@example.edu" },
-		update: { fullName: "Demo Lecturer", role: UserRole.LECTURER, isActive: true },
+		update: { fullName: "Demo Lecturer", role: UserRole.LECTURER, status: AccountStatus.ACTIVE },
 		create: {
 			email: "lecturer@example.edu",
 			fullName: "Demo Lecturer",
@@ -57,7 +57,7 @@ async function main() {
 
 	const studentUser = await prisma.user.upsert({
 		where: { email: "student@example.edu" },
-		update: { fullName: "Demo Student", role: UserRole.STUDENT, isActive: true },
+		update: { fullName: "Demo Student", role: UserRole.STUDENT, status: AccountStatus.ACTIVE },
 		create: {
 			email: "student@example.edu",
 			fullName: "Demo Student",

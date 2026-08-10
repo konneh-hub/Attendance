@@ -216,7 +216,9 @@ GET  /api/reports/course
 
 ## Authentication and Authorization
 
-Authentication must be handled server-side by Next.js:
+Authentication is handled server-side by Next.js Route Handlers and Prisma. Phase 3 implements authentication only; role-based authorization and business permissions are reserved for Phase 4.
+
+Authentication is handled server-side by Next.js:
 
 ```text
 Login form -> POST /api/auth/login -> Verify password
@@ -225,6 +227,18 @@ Login form -> POST /api/auth/login -> Verify password
 ```
 
 Passwords must never be stored in plaintext, returned by APIs, logged, or exposed to client components. Every protected operation must verify that the user is authenticated, active, authorized for the role, and permitted to access the requested resource. Frontend route protection is not a substitute for server-side authorization.
+
+The authentication endpoints are:
+
+```text
+POST /api/auth/login
+POST /api/auth/logout
+GET  /api/auth/session
+```
+
+Sessions use cryptographically random identifiers. Only a SHA-256 hash of the identifier is stored in PostgreSQL; the raw identifier exists only in the HTTP-only `attendance_session` cookie. Sessions expire after 30 days, are checked server-side on every lookup, and can be revoked individually or for all sessions belonging to a user.
+
+Only users with `ACTIVE` account status can authenticate. `INACTIVE` and `SUSPENDED` accounts are rejected without exposing database details.
 
 ## Database Architecture
 
@@ -397,6 +411,15 @@ The completed system should be tested at several levels:
 - **End-to-end:** login, dashboard, course/session creation, student attendance, and report generation
 
 The current repository provides `lint`, `build`, `dev`, and `start` scripts. Dedicated test scripts should be added with the test framework selected for the project.
+
+Authentication smoke tests run against the local Next.js server and Docker PostgreSQL database:
+
+```bash
+npm run dev -- --port 3100
+npm run test:auth
+```
+
+The suite covers successful Admin/Lecturer/Student login, invalid credentials, inactive and suspended accounts, session retrieval, expiration, logout revocation, and password/session-secret exposure.
 
 ## Production Build
 

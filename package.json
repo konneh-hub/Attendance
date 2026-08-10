@@ -15,7 +15,8 @@
     "db:logs": "docker compose logs -f postgres",
     "db:migrate": "prisma migrate dev",
     "db:seed": "prisma db seed",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "test:auth": "node --env-file=.env scripts/auth-smoke.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
