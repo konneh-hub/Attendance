@@ -1,0 +1,212 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  LECTURER
+  STUDENT
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+}
+
+enum VerificationMethod {
+  QR
+  GPS
+  FACE
+  MANUAL
+}
+
+enum AttendanceSessionStatus {
+  DRAFT
+  OPEN
+  CLOSED
+}
+
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  email        String   @unique @db.VarChar(255)
+  passwordHash String   @db.VarChar(255)
+  fullName     String   @db.VarChar(160)
+  role         UserRole
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  studentProfile  Student?
+  lecturerProfile Lecturer?
+  auditLogs       AuditLog[]
+
+  @@index([role, isActive])
+  @@index([fullName])
+}
+
+model Department {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @unique @db.VarChar(120)
+  code      String   @unique @db.VarChar(20)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  students  Student[]
+  lecturers Lecturer[]
+  courses   Course[]
+}
+
+model Student {
+  id            String   @id @default(uuid()) @db.Uuid
+  userId        String   @unique @db.Uuid
+  studentNumber String   @unique @db.VarChar(40)
+  programme     String?  @db.VarChar(160)
+  level         String?  @db.VarChar(40)
+  departmentId  String   @db.Uuid
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  department  Department         @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  enrollments CourseEnrollment[]
+  attendances Attendance[]
+
+  @@index([departmentId])
+  @@index([departmentId, level])
+}
+
+model Lecturer {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String   @unique @db.Uuid
+  staffNumber  String   @unique @db.VarChar(40)
+  departmentId String   @db.Uuid
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  department      Department          @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  courses         Course[]
+  createdSessions AttendanceSession[] @relation("SessionCreator")
+
+  @@index([departmentId])
+}
+
+model Course {
+  id           String   @id @default(uuid()) @db.Uuid
+  code         String   @unique @db.VarChar(30)
+  title        String   @db.VarChar(160)
+  description  String?  @db.Text
+  departmentId String   @db.Uuid
+  lecturerId   String   @db.Uuid
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  department  Department          @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  lecturer    Lecturer            @relation(fields: [lecturerId], references: [id], onDelete: Restrict)
+  enrollments CourseEnrollment[]
+  sessions    AttendanceSession[]
+
+  @@index([departmentId, isActive])
+  @@index([lecturerId, isActive])
+  @@index([title])
+}
+
+model CourseEnrollment {
+  id         String   @id @default(uuid()) @db.Uuid
+  studentId  String   @db.Uuid
+  courseId   String   @db.Uuid
+  enrolledAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  course  Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, courseId])
+  @@index([courseId])
+  @@index([studentId])
+}
+
+model AttendanceSession {
+  id                   String                  @id @default(uuid()) @db.Uuid
+  courseId             String                  @db.Uuid
+  createdByLecturerId  String                  @db.Uuid
+  title                String                  @db.VarChar(160)
+  startsAt             DateTime
+  endsAt               DateTime
+  status               AttendanceSessionStatus @default(DRAFT)
+  verificationMethods  VerificationMethod[]
+  locationLatitude     Decimal?                @db.Decimal(9, 6)
+  locationLongitude    Decimal?                @db.Decimal(9, 6)
+  locationRadiusMeters Int?
+  qrTokenHash          String?                 @unique @db.VarChar(128)
+  openedAt             DateTime?
+  closedAt             DateTime?
+  createdAt            DateTime                @default(now())
+  updatedAt            DateTime                @updatedAt
+
+  course            Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  createdByLecturer Lecturer     @relation("SessionCreator", fields: [createdByLecturerId], references: [id], onDelete: Restrict)
+  attendances       Attendance[]
+
+  @@index([courseId, startsAt])
+  @@index([createdByLecturerId, status])
+  @@index([status, startsAt, endsAt])
+}
+
+model Attendance {
+  id                 String             @id @default(uuid()) @db.Uuid
+  sessionId          String             @db.Uuid
+  studentId          String             @db.Uuid
+  status             AttendanceStatus
+  verificationMethod VerificationMethod
+  recordedAt         DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  notes              String?            @db.Text
+
+  session      AttendanceSession       @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  student      Student                 @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  verification AttendanceVerification?
+
+  @@unique([sessionId, studentId])
+  @@index([studentId, recordedAt])
+  @@index([sessionId, status])
+  @@index([status, recordedAt])
+}
+
+model AttendanceVerification {
+  id             String             @id @default(uuid()) @db.Uuid
+  attendanceId   String             @unique @db.Uuid
+  method         VerificationMethod
+  verifiedAt     DateTime           @default(now())
+  latitude       Decimal?           @db.Decimal(9, 6)
+  longitude      Decimal?           @db.Decimal(9, 6)
+  distanceMeters Int?
+  qrCodeHash     String?            @db.VarChar(128)
+  metadata       Json?
+
+  attendance Attendance @relation(fields: [attendanceId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id          String   @id @default(uuid()) @db.Uuid
+  actorUserId String?  @db.Uuid
+  action      String   @db.VarChar(80)
+  entityType  String   @db.VarChar(80)
+  entityId    String?  @db.VarChar(80)
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  actor User? @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([actorUserId, createdAt])
+  @@index([entityType, entityId, createdAt])
+  @@index([action, createdAt])
+}
