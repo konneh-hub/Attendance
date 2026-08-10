@@ -169,6 +169,78 @@ export async function listCourses(search: string, page: number, pageSize: number
   return { items, total, page, pageSize };
 }
 
+export async function listPrograms(search: string) {
+  return prisma.program.findMany({
+    where: search
+      ? {
+          OR: [
+            { name: { contains: search, mode: "insensitive" } },
+            { code: { contains: search, mode: "insensitive" } },
+          ],
+        }
+      : {},
+    orderBy: { name: "asc" },
+    select: {
+      id: true,
+      code: true,
+      name: true,
+      description: true,
+      createdAt: true,
+      _count: { select: { students: true } },
+    },
+  });
+}
+
+export async function createProgram(actorUserId: string, input: { code: string; name: string; description?: string }) {
+  return prisma.$transaction(async (transaction) => {
+    const program = await transaction.program.create({
+      data: {
+        code: input.code.trim().toUpperCase(),
+        name: input.name.trim(),
+        description: input.description?.trim() || null,
+      },
+    });
+    await transaction.auditLog.create({
+      data: {
+        actorUserId,
+        action: "PROGRAM_CREATED",
+        entityType: "Program",
+        entityId: program.id,
+      },
+    });
+    return program;
+  });
+}
+
+export async function getAttendanceReportsOverview() {
+  const [totalSessions, attendanceRecords, presentCount, absentCount, lateCount, activeCourses] = await prisma.$transaction([
+    prisma.attendanceSession.count(),
+    prisma.attendance.count(),
+    prisma.attendance.count({ where: { status: "PRESENT" } }),
+    prisma.attendance.count({ where: { status: "ABSENT" } }),
+    prisma.attendance.count({ where: { status: "LATE" } }),
+    prisma.course.count({ where: { isActive: true } }),
+  ]);
+
+  return { totalSessions, attendanceRecords, presentCount, absentCount, lateCount, activeCourses };
+}
+
+export async function listRecentAttendanceSessions(limit: number) {
+  return prisma.attendanceSession.findMany({
+    take: limit,
+    orderBy: { startsAt: "desc" },
+    select: {
+      id: true,
+      title: true,
+      status: true,
+      startsAt: true,
+      course: { select: { code: true, title: true } },
+      createdByLecturer: { select: { user: { select: { fullName: true } } } },
+      _count: { select: { attendances: true } },
+    },
+  });
+}
+
 export async function createAdminUser(input: {
   actorUserId: string;
   email: string;

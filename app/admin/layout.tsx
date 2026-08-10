@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 
 import { LogoutButton } from "@/components/auth/LogoutButton";
 import { getCurrentUser } from "@/lib/session";
-import Link from "next/link";
 
 const links = [
   ["Dashboard", "/admin"],
@@ -11,6 +11,8 @@ const links = [
   ["Lecturers", "/admin/lecturers"],
   ["Departments", "/admin/departments"],
   ["Courses", "/admin/courses"],
+  ["Programs", "/admin/programs"],
+  ["Attendance Reports", "/admin/attendance-reports"],
 ] as const;
 
 export default async function AdminLayout({ children }: Readonly<{ children: React.ReactNode }>) {

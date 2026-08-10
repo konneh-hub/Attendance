@@ -85,6 +85,19 @@ model Department {
   courses   Course[]
 }
 
+model Program {
+  id          String   @id @default(uuid()) @db.Uuid
+  code        String   @unique @db.VarChar(30)
+  name        String   @db.VarChar(160)
+  description String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  students Student[]
+
+  @@index([name])
+}
+
 model Student {
   id            String   @id @default(uuid()) @db.Uuid
   userId        String   @unique @db.Uuid
@@ -92,11 +105,13 @@ model Student {
   programme     String?  @db.VarChar(160)
   level         String?  @db.VarChar(40)
   departmentId  String   @db.Uuid
+  programId      String?  @db.Uuid
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
   user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   department  Department         @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  program     Program?           @relation(fields: [programId], references: [id], onDelete: SetNull)
   enrollments CourseEnrollment[]
   attendances Attendance[]
 

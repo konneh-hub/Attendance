@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 type Option = { id: string; label: string };
-type FormKind = "user" | "department" | "course";
+type FormKind = "user" | "department" | "course" | "program";
 
 type Props = {
   kind: FormKind;
@@ -27,7 +27,7 @@ export function AdminCreateForm({ kind, departments = [], lecturers = [] }: Prop
     const formData = new FormData(event.currentTarget);
     const values = Object.fromEntries(formData.entries());
     const payload = kind === "user" ? { ...values, role } : values;
-    const endpoint = kind === "user" ? "/api/admin/users" : kind === "department" ? "/api/admin/departments" : "/api/admin/courses";
+    const endpoint = kind === "user" ? "/api/admin/users" : kind === "department" ? "/api/admin/departments" : kind === "course" ? "/api/admin/courses" : "/api/admin/programs";
 
     try {
       const response = await fetch(endpoint, {
@@ -40,7 +40,7 @@ export function AdminCreateForm({ kind, departments = [], lecturers = [] }: Prop
         setErrorMessage(result.message ?? "Unable to save this record.");
         return;
       }
-      router.push(kind === "user" ? "/admin/users" : kind === "department" ? "/admin/departments" : "/admin/courses");
+      router.push(kind === "user" ? "/admin/users" : kind === "department" ? "/admin/departments" : kind === "course" ? "/admin/courses" : "/admin/programs");
       router.refresh();
     } catch {
       setErrorMessage("The service is unavailable. Please try again.");
@@ -63,6 +63,7 @@ export function AdminCreateForm({ kind, departments = [], lecturers = [] }: Prop
       ) : null}
       {kind === "department" ? <><Field label="Department name" name="name" required /><Field label="Department code" name="code" required /></> : null}
       {kind === "course" ? <><Field label="Course code" name="code" required /><Field label="Course title" name="title" required /><label className="block text-sm font-medium text-zinc-800">Description<textarea className="mt-2 min-h-24 w-full rounded-lg border border-zinc-300 p-3 text-zinc-950 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" name="description" /></label><SelectField label="Department" name="departmentId" options={departments} required /><SelectField label="Lecturer" name="lecturerId" options={lecturers} required /></> : null}
+      {kind === "program" ? <><Field label="Program code" name="code" required /><Field label="Program name" name="name" required /><label className="block text-sm font-medium text-zinc-800">Description<textarea className="mt-2 min-h-24 w-full rounded-lg border border-zinc-300 p-3 text-zinc-950 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" name="description" /></label></> : null}
       {errorMessage ? <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">{errorMessage}</p> : null}
       <button className="rounded-lg bg-indigo-600 px-4 py-2 font-semibold text-white hover:bg-indigo-700 disabled:opacity-60" disabled={isSubmitting} type="submit">{isSubmitting ? "Saving..." : "Save record"}</button>
     </form>

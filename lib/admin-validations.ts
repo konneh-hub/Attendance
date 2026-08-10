@@ -35,3 +35,9 @@ export const courseSchema = z.object({
   departmentId: z.string().uuid(),
   lecturerId: z.string().uuid(),
 });
+
+export const programSchema = z.object({
+  code: z.string().trim().min(2).max(30),
+  name: z.string().trim().min(2).max(160),
+  description: z.string().trim().max(5000).optional(),
+});
