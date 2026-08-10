@@ -6,7 +6,7 @@
     "seed": "tsx prisma/seed.ts"
   },
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --webpack",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -17,7 +17,8 @@
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
     "test:auth": "node --env-file=.env scripts/auth-smoke.mjs",
-    "test:authorization": "node --env-file=.env scripts/authorization-smoke.mjs"
+    "test:authorization": "node --env-file=.env scripts/authorization-smoke.mjs",
+    "test:admin": "node --env-file=.env scripts/admin-smoke.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
