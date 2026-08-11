@@ -10,9 +10,22 @@ import {
 export async function POST(request: Request) {
   let payload: unknown;
 
+  const rawBody = await request.text();
+  const rawBodyLength = rawBody?.length ?? 0;
+
   try {
-    payload = await request.json();
-  } catch {
+    payload = JSON.parse(rawBody);
+  } catch (error) {
+    console.error(
+      `Login payload parse failed. method=${request.method} contentType=${request.headers.get(
+        "content-type",
+      )} contentLength=${request.headers.get("content-length")} rawBodyLength=${rawBodyLength}`,
+      rawBody ? rawBody.slice(0, 200) : "<empty>",
+      {
+        error: error instanceof Error ? error.message : String(error),
+      },
+    );
+
     return NextResponse.json(
       { success: false, message: "Invalid login request." },
       { status: 400 },
@@ -50,7 +63,7 @@ export async function POST(request: Request) {
       );
     }
 
-    console.error("Authentication request failed.");
+    console.error("Authentication request failed.", error);
     return NextResponse.json(
       { success: false, message: "Authentication is temporarily unavailable." },
       { status: 500 },
