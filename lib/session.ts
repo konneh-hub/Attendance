@@ -97,7 +97,6 @@ export async function getSession(): Promise<CurrentSession | null> {
   });
 
   if (!session) {
-    await clearSessionCookie();
     return null;
   }
 
@@ -112,7 +111,6 @@ export async function getSession(): Promise<CurrentSession | null> {
         data: { revokedAt: new Date() },
       });
     }
-    await clearSessionCookie();
     return null;
   }
 

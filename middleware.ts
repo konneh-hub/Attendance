@@ -1,22 +1,33 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const protectedPrefixes = ["/admin", "/lecturer", "/student"];
+const protectedPagePrefixes = ["/admin", "/lecturer", "/student"];
+const protectedApiPrefixes = ["/api/admin", "/api/lecturer", "/api/student"];
+const SESSION_COOKIE_NAME = "attendance_session";
 
 export function middleware(request: NextRequest) {
-	const requiresAuthentication = protectedPrefixes.some((prefix) =>
-		request.nextUrl.pathname.startsWith(prefix),
-	);
+	const pathname = request.nextUrl.pathname;
+	const requiresAuthentication =
+		protectedPagePrefixes.some((prefix) => pathname.startsWith(prefix)) ||
+		protectedApiPrefixes.some((prefix) => pathname.startsWith(prefix));
 
-	if (!requiresAuthentication || request.cookies.has("attendance_session")) {
+	if (!requiresAuthentication) {
 		return NextResponse.next();
 	}
 
+	if (request.cookies.has(SESSION_COOKIE_NAME)) {
+		return NextResponse.next();
+	}
+
+	if (pathname.startsWith("/api/")) {
+		return NextResponse.json(
+			{ success: false, message: "Authentication required." },
+			{ status: 401 },
+		);
+	}
+
 	const loginUrl = new URL("/login", request.url);
-	loginUrl.searchParams.set(
-		"next",
-		`${request.nextUrl.pathname}${request.nextUrl.search}`,
-	);
+	loginUrl.searchParams.set("next", `${pathname}${request.nextUrl.search}`);
 
 	return NextResponse.redirect(loginUrl);
 }

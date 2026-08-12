@@ -2,7 +2,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { PrismaClient, AccountStatus } from "@prisma/client";
 
 const prisma = new PrismaClient();
-const baseUrl = "http://localhost:3100";
+const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 const password = process.env.SEED_ADMIN_PASSWORD;
 
 function assert(condition, message) {

@@ -64,8 +64,22 @@ export async function POST(request: Request) {
     }
 
     console.error("Authentication request failed.", error);
+    const debugPayload =
+      process.env.NODE_ENV !== "production"
+        ? {
+            debug: {
+              message: error instanceof Error ? error.message : String(error),
+              stack: error instanceof Error ? error.stack : undefined,
+            },
+          }
+        : {};
+
     return NextResponse.json(
-      { success: false, message: "Authentication is temporarily unavailable." },
+      {
+        success: false,
+        message: "Authentication is temporarily unavailable.",
+        ...debugPayload,
+      },
       { status: 500 },
     );
   }

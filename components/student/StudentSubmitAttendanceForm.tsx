@@ -13,8 +13,8 @@ const verificationLabels: Record<VerificationMethod, string> = {
 export function StudentSubmitAttendanceForm({ session }: { session: {
   id: string;
   title: string;
-  startsAt: string;
-  endsAt: string | null;
+  startsAt: string | Date;
+  endsAt: string | Date | null;
   course: { code: string; title: string };
   lecturerName: string;
   verificationMethods: VerificationMethod[];

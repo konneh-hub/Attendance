@@ -318,8 +318,9 @@ Create `.env.local` locally:
 
 ```env
 DATABASE_URL="postgresql://USER:PASSWORD@127.0.0.1:5433/attendance"
-AUTH_SECRET="replace-with-a-long-random-secret"
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
+SEED_ADMIN_PASSWORD="DevelopmentOnlyPassword123!"
+# AUTH_SECRET is optional and reserved for future secure token signing or session protection.
 ```
 
 Never commit real secrets. Production values belong in the deployment platform's environment-variable configuration.
@@ -441,7 +442,7 @@ The system can be deployed as one Next.js application backed by PostgreSQL:
 Internet -> Next.js application -> Prisma -> PostgreSQL
 ```
 
-Production configuration must include `DATABASE_URL`, `AUTH_SECRET`, and `NEXT_PUBLIC_APP_URL`. Never commit production secrets.
+Production configuration must include `DATABASE_URL` and `NEXT_PUBLIC_APP_URL`. `AUTH_SECRET` is optional unless you implement signed tokens or JWTs. Never commit production secrets.
 
 ## Development Workflow
 
@@ -468,7 +469,7 @@ The migration should preserve administrator, lecturer, and student functionality
 - **PostgreSQL connection:** Check `DATABASE_URL` and confirm PostgreSQL is running.
 - **Prisma client:** Run `npx prisma generate` after installing Prisma or changing the schema.
 - **Migration errors:** Run `npx prisma migrate status` and inspect migration history before creating another migration.
-- **Authentication failure:** Verify the user, active status, password hash, `AUTH_SECRET`, authentication cookie, and middleware configuration.
+- **Authentication failure:** Verify the user, active status, password hash, authentication cookie, and middleware configuration.
 - **Camera or GPS failure:** Check browser permissions, HTTPS in production, device availability, valid coordinates, and session settings.
 
 ## Project Requirements
